@@ -1,11 +1,10 @@
-version: '3.8'
 services:
   db:
     image: postgres:16-alpine
     environment:
-     POSTGRES_USER:admin
-     POSTGRES_PASSWORD: password
-     POSTGRES_DB: questlog_dev
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: questlog_dev
     ports:
       - "5432:5432"
     volumes:
@@ -13,7 +12,8 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports: "6379:6379"
+    ports:
+      - "6379:6379"
 
 volumes:
   pgdata:
