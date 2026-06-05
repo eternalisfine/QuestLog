@@ -1,0 +1,43 @@
+:root {
+  --bg-dark: #000000;
+  --panel-bg: #0a0a0a;
+  --border-color: #333333;
+  --text-main: #f0f0f0;
+  --text-muted: #888888;
+  --accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sharp edges without rounded corners */
+.card {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  background-color: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--accent);
+  color: var(--bg-dark);
+}
