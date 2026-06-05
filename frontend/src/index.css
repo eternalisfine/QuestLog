@@ -24,6 +24,68 @@ body {
   margin-bottom: 1rem;
 }
 
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.title {
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.input-field {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.5rem;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+}
+
+.duration-input {
+  width: 80px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.5rem;
+  outline: none;
+}
+
+.flex-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.push-right {
+  margin-left: auto;
+}
+
+.quest-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.completed-section {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-top: 2rem;
+}
+
+.quest-done {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
 button {
   background-color: transparent;
   color: var(--accent);
