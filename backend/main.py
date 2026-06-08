@@ -4,9 +4,12 @@ load_dotenv()
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
 from database import engine, get_db, Base
 import models, schemas, auth, os
+from redis_client import r
 
 
 Base.metadata.create_all(bind=engine)
@@ -23,6 +26,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# HELPERS
+
+def seconds_until_midnight_utc() -> int:
+    now = datetime.now(timezone.utc)
+    midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return int((midnight - now).total_seconds())
+
+def earned_cache_key(user_id: int, date) -> str:
+    return f"budget:earned:{user_id}:{date}"
+
+def get_earned_minutes(user_id: int, date, db: Session) -> int:
+    """Cache-aside: check Redis first, fall back to DB, then cache the result."""
+    key = earned_cache_key(user_id, date)
+    cached = r.get(key)
+    if cached is not None:
+        return int(cached)  # cache HIT
+
+    # cache MISS
+    result = db.query(func.sum(models.Quest.duration_minutes)).filter(
+        models.Quest.owner_id == user_id,
+        models.Quest.completed == True,
+        func.date(models.Quest.created_at) == date
+    ).scalar()
+    earned = result or 0
+    r.setex(key, seconds_until_midnight_utc(), earned)
+    return earned
+
+def get_used_minutes(user_id: int, date, db: Session) -> int:
+    result = db.query(func.sum(models.GamingSession.duration_minutes)).filter(
+        models.GamingSession.user_id == user_id,
+        func.date(models.GamingSession.started_at) == date,
+        models.GamingSession.duration_minutes.isnot(None)
+    ).scalar()
+    return result or 0
+
 
 # AUTH
 
@@ -84,3 +123,67 @@ def complete_quest(
     db.commit()
     db.refresh(quest)
     return quest
+
+
+# BUDGET
+
+@app.get("/budget/today", response_model=schemas.BudgetResponse)
+def get_budget(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    today = datetime.now(timezone.utc).date()
+    earned = get_earned_minutes(current_user.id, today, db)
+    used = get_used_minutes(current_user.id, today,db)
+
+    active = db.query(models.GamingSession).filter(
+        models.GamingSession.user_id == current_user.id,
+        models.GamingSession.ended_at.is_(None)
+    ).first()
+
+    return {
+        "earned_minutes": earned,
+        "used_minutes": used,
+        "remaining_minutes": max(0, earned - used),
+        "can_play": (earned - used) > 0,
+        "active_session_id": active.id if active else None,
+        "active_session_started_at": active.started_at if active else None,
+    }
+
+
+# GAMING SESSIONS
+
+@app.post("/sessions/start", response_model=schemas.SessionResponse, status_code=201)
+def start_session(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Block for already running sesh
+    if db.query(models.GamingSession).filter(
+        models.GamingSession.user_id == current_user.id,
+        models.GamingSession.ended_at.is_(None)
+    ).first():
+        raise HTTPException(status_code=400, detail="Session already active")
+
+    # Block for broke people
+    today = datetime.now(timezone.utc).date()
+    earned = get_earned_minutes(current_user.id, today, db)
+    used = get_used_minutes(current_user.id, today, db)
+    if (earned - used) <= 0:
+        raise HTTPException(status_code=403, detail="No gaming budget remaining. Complete more quests first.")
+
+    session = models.GamingSession(user_id=current_user.id)
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+@app.post("/sessions/end", response_model=schemas.SessionResponse)
+def end_session(db:Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    session = db.query(models.GamingSession).filter(
+        models.GamingSession.user_id == current_user.id,
+        models.GamingSession.ended_at.is_(None)
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="No active session found")
+
+    now = datetime.now(timezone.utc)
+    session.ended_at = now
+    session.duration_minutes = max(1, int((now - session.started_at).total_seconds() / 60))
+    db.commit()
+    db.refresh(session)
+    return session
