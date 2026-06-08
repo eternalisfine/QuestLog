@@ -12,6 +12,12 @@ async function request(path, options = {}) {
             ...options.headers,
         },
     })
+
+    if (res.status === 401) {
+        localStorage.removeItem('ql_token')
+        throw new Error('SESSION_EXPIRED')
+    }
+
     if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: 'Request failed' }))
         throw new Error(err.detail)
@@ -42,4 +48,8 @@ export const api = {
     getQuests:      ()              => request('/quests/'),
     createQuests:   (title,mins)    => request('/quests/', { method: 'POST', body: JSON.stringify({ title, duration_minutes: mins }) }),
     completeQuest:  (id)            => request('/quests/${id}/complete', { method: 'PATCH' }),
+
+    getBudget:      ()  => request('/budget/today'),
+    startSession:   ()  => request('/sessions/start', { method: 'POST' }),
+    endSession:     ()  => request('/sessions/end', { method: 'POST' }),
 }
