@@ -27,3 +27,18 @@ class QuestResponse(BaseModel):
     duration_minutes: int
     completed: bool
     created_at: datetime
+
+class SessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    duration_minutes: Optional[int] = None
+
+class BudgetResponse(BaseModel):
+    earned_minutes: int
+    used_minutes: int
+    remaining_minutes: int
+    can_play: bool
+    active_session_id: Optional[int] = None
+    active_session_started_at: Optional[datetime] = None
