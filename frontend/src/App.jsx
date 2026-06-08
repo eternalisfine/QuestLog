@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { api } from './api'
-import './App.css'
 
 
 // AUTH FORM
-
 
 function AuthForm({ mode, onSuccess, onSwitch }) {
   const [email, setEmail] = useState('')
