@@ -64,9 +64,13 @@ function QuestBoard({ onLogout }) {
   const [title, setTitle] = useState('')
   const [duration, setDuration] = useState(45)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getQuests().then(setQuests).catch(() => { api.logout(); onLogout() })
+    api.getQuests()
+      .then(setQuests)
+      .catch(e => { if (e.message === 'SESSION_EXPIRED') onLogout() })
+      .finally(() => setLoading(false))
   }, [])
 
   const addQuest = async() => {
@@ -85,6 +89,8 @@ function QuestBoard({ onLogout }) {
 
   const pending = quests.filter(q => !q.completed)
   const done = quests.filter(q => q.completed)
+
+  if (loading) return <div className="container"><p style={{ color: 'var(text-muted)' }}>Loading...</p></div>
 
   return (
     <div className="container">
