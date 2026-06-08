@@ -11,6 +11,12 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
 
   const submit = async () => {
     setError('')
+    
+    if(mode === 'register' && password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+
     try{
       if (mode === 'register') {
         await api.register(email, password)
@@ -64,6 +70,7 @@ function QuestBoard({ onLogout }) {
   const [title, setTitle] = useState('')
   const [duration, setDuration] = useState(45)
   const [error, setError] = useState('')
+  
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
