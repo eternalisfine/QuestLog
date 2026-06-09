@@ -2,8 +2,9 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 psycopg2-binary
-python-dotenv
 passlib[bcrypt]
+python-dotenv
 python-jose[cryptography]
+python-multipart
 email-validator
 redis

@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-fallback-change-me")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 
-pwd_context = CryptContext(schemes=["bcrypt"], de[recated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def hash_password(password: str) -> str:

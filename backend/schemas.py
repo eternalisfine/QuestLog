@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Optional, List, Dict
 from datetime import datetime
 
 class UserCreate(BaseModel):

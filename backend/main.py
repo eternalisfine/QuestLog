@@ -187,3 +187,7 @@ def end_session(db:Session = Depends(get_db), current_user: models.User = Depend
     db.commit()
     db.refresh(session)
     return session
+
+@app.get("/ping")
+def ping():
+    return {"message": "pong", "database": "connected"}
