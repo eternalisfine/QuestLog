@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
-from database import engine, get_db, Base
+from database import engine, get_db, get_read_db, Base
 import models, schemas, auth, os
 from redis_client import r
 
@@ -89,10 +89,10 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 # QUESTS
 @app.get("/quests/", response_model=list[schemas.QuestResponse])
 def get_quests(
-    db: Session = Depends(get_db),
+    read_db: Session = Depends(get_read_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    return db.query(models.Quest).filter(models.Quest.owner_id == current_user.id).all()
+    return read_db.query(models.Quest).filter(models.Quest.owner_id == current_user.id).all()
 
 @app.post("/quests/", response_model=schemas.QuestResponse, status_code=201)
 def create_quest(
@@ -128,12 +128,12 @@ def complete_quest(
 # BUDGET
 
 @app.get("/budget/today", response_model=schemas.BudgetResponse)
-def get_budget(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def get_budget(read_db: Session = Depends(get_read_db), current_user: models.User = Depends(auth.get_current_user)):
     today = datetime.now(timezone.utc).date()
-    earned = get_earned_minutes(current_user.id, today, db)
-    used = get_used_minutes(current_user.id, today,db)
+    earned = get_earned_minutes(current_user.id, today, read_db)
+    used = get_used_minutes(current_user.id, today, read_db)
 
-    active = db.query(models.GamingSession).filter(
+    active = read_db.query(models.GamingSession).filter(
         models.GamingSession.user_id == current_user.id,
         models.GamingSession.ended_at.is_(None)
     ).first()
