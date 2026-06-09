@@ -1,6 +1,6 @@
 services:
   db-primary:
-    image: bitnami/postgresql:16
+    image: bitnamilegacy/postgresql:16
     environment:
       POSTGRESQL_REPLICATION_MODE:      master
       POSTGRESQL_REPLICATION_USER:      replicator
@@ -9,9 +9,9 @@ services:
       POSTGRESQL_PASSWORD:              ${POSTGRES_PASSWORD}
       POSTGRESQL_DATABASE:              ${POSTGRES_DB}
     ports:
-      - "5432:5432"   # for db debugging
+      - "127.0.0.1:5432:5432"   # for db debugging
     volumes:
-      - pgdata:/bitnami/postgresql
+      - pgdata-primary:/bitnami/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -19,7 +19,7 @@ services:
       retries: 5
 
   db-replica:
-    image: bitnami/postgresql:16
+    image: bitnamilegacy/postgresql:16
     environment:
       POSTGRESQL_REPLICATION_MODE:      slave
       POSTGRESQL_MASTER_HOST:           db-primary
@@ -31,6 +31,8 @@ services:
     depends_on:
       db-primary:
         condition: service_healthy
+    volumes:
+      - pgdata-replica:/bitnami/postgresql    # Prevents full resyncs
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -41,7 +43,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"    # for redis debugging
+      - "127.0.0.1:6379:6379"    # for redis debugging
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -49,8 +51,9 @@ services:
       retries: 5
 
 
-  backend1: &backend
+  x-backend-base: &backend
     build: ./backend
+    image: questlog-backend:latest
     volumes:
       - ./backend:/app  # mounting source
       - /app/venv       # not the local venv
@@ -69,6 +72,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  backend1:
+    <<: *backend
 
   backend2:
     <<: *backend
@@ -90,4 +96,5 @@ services:
 
 
 volumes:
-  pgdata:
+  pgdata-primary:
+  pgdata-replica:
