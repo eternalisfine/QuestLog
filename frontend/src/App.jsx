@@ -4,7 +4,7 @@ import './App.css'
 
 
 // Budget Panel
-function BudgetPanel({ onBudgetChange }) {
+function BudgetPanel({ onBudgetChange, onLogout }) {
   const [budget,setBudget] = useState(null)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState('')
@@ -13,8 +13,10 @@ function BudgetPanel({ onBudgetChange }) {
     try {
       const data = await api.getBudget()
       setBudget(data)
-    } catch (e) {}
-  }, [])
+    } catch (e) {
+      if (e.message === 'SESSION_EXPIRED') onLogout?.()
+    }
+  }, [onLogout])
 
   useEffect(() => { fetchBudget() }, [fetchBudget])
 
@@ -49,20 +51,20 @@ function BudgetPanel({ onBudgetChange }) {
   const fmt = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0')
     const s = (secs % 60).toString().padStart(2, '0')
-    return '${m}:{s}'
+    return `${m}:{s}`
   }
 
   if (!budget) return <div className="card"><p className="budget-panel-title">Loading budget...</p></div>
 
   const fillPct = budget.earned_minutes > 0
-    ? Math.max(0, (budget.remaining_minutes / budget. earned_minutes)) * 100
+    ? Math.max(0, (budget.remaining_minutes / budget.earned_minutes)) * 100
     : 0
 
   return (
     <div className="card">
       <p className="budget-panel-title">Gaming Budget</p>
       <div className="budget-bar-track">
-        <div className="budget-bar-fill" style={{ width: '${fillPct}%' }} />  
+        <div className="budget-bar-fill" style={{ width: `${fillPct}%` }} />  
       </div>
       <p className="budget-numbers" style={{ margin: '0 0 0.75rem' }}>
         <span>{budget.remaining_minutes}min</span> remaining of <span>{budget.earned_minutes}min</span> earned
@@ -113,7 +115,7 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
         await api.register(email, password)
         onSuccess()
       } else {
-        await api.register(email, password)
+        await api.login(email, password)
         onSuccess()
       }
     } catch (e) {
@@ -129,7 +131,7 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
           className="input-field"
           type="email"
           placeholder="Email"
-          value="email"
+          value={email}
           onChange={e => setEmail(e.target.value)}
         />
         <input
@@ -161,6 +163,8 @@ function QuestBoard({ onLogout }) {
   const [title, setTitle] = useState('')
   const [duration, setDuration] = useState(45)
   const [error, setError] = useState('')
+  
+  const [budgetKey, setBudgetKey] = useState(0)
 
   const [loading, setLoading] = useState(true)
 
@@ -173,6 +177,7 @@ function QuestBoard({ onLogout }) {
 
   const addQuest = async() => {
     if (!title.trim()) return
+    setError('')
     try {
       const quest = await api.createQuest(title, Number(duration))
       setQuests(prev => [...prev, quest])
@@ -181,14 +186,17 @@ function QuestBoard({ onLogout }) {
   }
 
   const completeQuest = async (id) => {
-    const updated = await api.completeQuest(id)
-    setQuests(prev => prev.map(q => q.id === id ? updated : q))
+    try {
+      const updated = await api.completeQuest(id)
+      setQuests(prev => prev.map(q => q.id === id ? updated : q))
+      setBudgetKey(k => k + 1)
+    } catch (e) { setError(e.message) }
   }
 
   const pending = quests.filter(q => !q.completed)
   const done = quests.filter(q => q.completed)
 
-  if (loading) return <div className="container"><p style={{ color: 'var(text-muted)' }}>Loading...</p></div>
+  if (loading) return <div className="container"><p style={{ color: 'var(--text-muted)' }}>Loading...</p></div>
 
   return (
     <div className="container">
@@ -197,6 +205,8 @@ function QuestBoard({ onLogout }) {
         <button onClick={onLogout} className="push-right" style={{ opacity: 0.4, fontSize: '0.75rem' }}>Logout</button>
       </div>
 
+      <BudgetPanel key={budgetKey} onBudgetChange={() => setBudgetKey(k => k + 1)} onLogout={onLogout} />
+      
       <div className="card">
         <input
           className="input-field"
