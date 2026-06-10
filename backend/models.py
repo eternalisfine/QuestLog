@@ -11,7 +11,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     quests = relationship("Quest", back_populates="owner", cascade="all, delete-orphan")
-
+    gaming_sessions = relationship("GamingSession", back_populates="owner", cascade="all, delete-orphan")
 
 class Quest(Base):
     __tablename__ = "quests"

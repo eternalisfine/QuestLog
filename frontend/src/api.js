@@ -1,10 +1,10 @@
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_URL || ''
 
 const getToken = () => localStorage.getItem('ql_token')
 
 async function request(path, options = {}) {
     const token = getToken()
-    const res = await fetch('${BASE}${path}', {
+    const res = await fetch(`${BASE}${path}`, {
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export const api = {
 
     login: async (email, password) => {
         // need form-encoded not JSON
-        const res = await fetch('${BASE}/auth/token', {
+        const res = await fetch(`${BASE}/auth/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({ username: email, password }),
