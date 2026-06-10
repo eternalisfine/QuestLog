@@ -8,7 +8,7 @@ async function request(path, options = {}) {
         ...options,
         headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: 'Bearer ${token}' } : {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...options.headers,
         },
     })
@@ -45,11 +45,11 @@ export const api = {
 
     isLoggedIn: () => !!getToken(),
 
-    getQuests:      ()              => request('/quests/'),
-    createQuests:   (title,mins)    => request('/quests/', { method: 'POST', body: JSON.stringify({ title, duration_minutes: mins }) }),
-    completeQuest:  (id)            => request('/quests/${id}/complete', { method: 'PATCH' }),
+    getQuests:      ()              => request(`/quests/`),
+    createQuest:   (title,mins)    => request(`/quests/`, { method: 'POST', body: JSON.stringify({ title, duration_minutes: mins }) }),
+    completeQuest:  (id)            => request(`/quests/${id}/complete`, { method: 'PATCH' }),
 
-    getBudget:      ()  => request('/budget/today'),
-    startSession:   ()  => request('/sessions/start', { method: 'POST' }),
-    endSession:     ()  => request('/sessions/end', { method: 'POST' }),
+    getBudget:      ()  => request(`/budget/today`),
+    startSession:   ()  => request(`/sessions/start`, { method: 'POST' }),
+    endSession:     ()  => request(`/sessions/end`, { method: 'POST' }),
 }

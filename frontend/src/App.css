@@ -57,7 +57,7 @@ button:hover {
   margin-bottom: 0.5rem;
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
-  color: var(text-main);
+  color: var(--text-main);
   padding: 0.5rem;
   box-sizing: border-box;
   outline: none;

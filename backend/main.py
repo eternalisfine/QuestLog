@@ -122,6 +122,11 @@ def complete_quest(
     quest.completed = True
     db.commit()
     db.refresh(quest)
+
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    cache_key = earned_cache_key(current_user.id, today_str)
+    r.delete(cache_key)
+
     return quest
 
 

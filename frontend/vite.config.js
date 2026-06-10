@@ -22,6 +22,18 @@ export default defineConfig({
         target: 'http://localhost:80',
         changeOrigin: true,
       },
+      '/quests': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+      },
+      '/budget': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+      },
+      'sessions': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+      },
     }
   }
 })
