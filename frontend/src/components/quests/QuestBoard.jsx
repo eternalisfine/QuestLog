@@ -4,7 +4,7 @@ import { api } from '../../api.js'
 export default function QuestBoard({ onLogout }) {
     const [quests, setQuests] = useState([])
     const [title, setTitle] = useState('')
-    const [duration, setDuratin] = useState(45)
+    const [duration, setDuration] = useState(45)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(true)
 
