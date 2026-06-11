@@ -2,10 +2,9 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Float } from '@react-three/drei'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import * as THREE from 'three'
-import { xor } from 'three/src/nodes/math/OperatorNode.js'
 
 
-const SAND_POSITION = Array.from({ length: 10 }, (_, i) => {
+const SAND_POSITIONS = Array.from({ length: 10 }, (_, i) => {
     const angle = (i / 10) * Math.PI * 2
     const r = 0.08 + (i % 3) * 0.04
     return [ Math.cos(angle) * r, 0.28 - i * 0.055, Math.sin(angle) * r ]
@@ -93,7 +92,7 @@ export default function FloatingHourglass() {
                 dpr={Math.min(window.devicePixelRatio, 2)}
             >
                 <ambientLight intensity={0.35} />
-                <pointLight position={[2,3,2]} intensity={2.2} color="#a79bfa" />
+                <pointLight position={[2,3,2]} intensity={2.2} color="#a78bfa" />
                 <pointLight position={[-2,-2,1]} intensity={1.1} color="#60a5fa" />
                 <pointLight position={[0,1,3]} intensity={0.6} color="#f0abfc" />
                 <HourglassMesh scrollY={scrollY} />
