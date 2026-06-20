@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import SceneBackground from './components/scene/SceneBackground'
-import FloatingHourglass from './components/scene/FloatingHourglass'
+ // import FloatingHourglass from './components/scene/FloatingHourglass'
 import LiquidLogoTitle from './components/ui/LiquidLogoTitle'
 import GlassButton        from './components/ui/GlassButton'
 import GlassContainer     from './components/ui/GlassContainer'
@@ -26,7 +26,7 @@ export default function App() {
   return (
     <>
       <SceneBackground />
-      <FloatingHourglass />
+      {/* <FloatingHourglass /> */}
 
       <div className="app-shell">
         <header className="app-header">

@@ -1,13 +1,14 @@
+import Container from './container.js';
+
 class Button extends Container {
   constructor(options = {}) {
     const text = options.text || 'Button'
     const fontSize = parseInt(options.size) || 48
     const onClick = options.onClick || null
-    const type = options.type || 'rounded' // "rounded", "circle", or "pill"
-    const warp = options.warp !== undefined ? options.warp : false // Center warping disabled by default
+    const type = options.type || 'rounded'
+    const warp = options.warp !== undefined ? options.warp : false
     const tintOpacity = options.tintOpacity !== undefined ? options.tintOpacity : 0.2
 
-    // Call parent constructor (border radius will be set in setSizeFromText)
     super({
       borderRadius: fontSize,
       type: type,
@@ -19,10 +20,9 @@ class Button extends Container {
     this.onClick = onClick
     this.type = type
     this.warp = warp
-    this.parent = null // Will be set if added to container
+    this.parent = null
     this.isNestedGlass = false
 
-    // Add button-specific styling and content
     this.element.classList.add('glass-button')
     if (this.type === 'circle') {
       this.element.classList.add('glass-button-circle')
@@ -35,15 +35,11 @@ class Button extends Container {
   setSizeFromText() {
     let width, height
 
-    // Handle different button types
     if (this.type === 'circle') {
-      // For circles, use 2.5x the fontSize for both dimensions
       const circleSize = this.fontSize * 2.5
       width = circleSize
       height = circleSize
-      this.borderRadius = circleSize / 2 // 50% for perfect circle
-
-      // Force exact square dimensions for circles
+      this.borderRadius = circleSize / 2
       this.element.style.width = width + 'px'
       this.element.style.height = height + 'px'
       this.element.style.minWidth = width + 'px'
@@ -51,15 +47,13 @@ class Button extends Container {
       this.element.style.maxWidth = width + 'px'
       this.element.style.maxHeight = height + 'px'
     } else if (this.type === 'pill') {
-      // For pill buttons, calculate height first, then set border radius to half height for true capsule shape
       const textMetrics = Button.measureText(this.text, this.fontSize)
       width = Math.ceil(textMetrics.width + this.fontSize * 2)
-      height = Math.ceil(this.fontSize + this.fontSize * 1.2) // Slightly less padding for pills
-      this.borderRadius = height / 2 // Half height for perfect capsule proportions
+      height = Math.ceil(this.fontSize + this.fontSize * 1.2)
+      this.borderRadius = height / 2
       this.element.style.minWidth = width + 'px'
       this.element.style.minHeight = height + 'px'
     } else {
-      // For rounded buttons, calculate dimensions from text
       const textMetrics = Button.measureText(this.text, this.fontSize)
       width = Math.ceil(textMetrics.width + this.fontSize * 2)
       height = Math.ceil(this.fontSize + this.fontSize * 1.5)
@@ -68,50 +62,19 @@ class Button extends Container {
       this.element.style.minHeight = height + 'px'
     }
 
-    // Apply border radius to element
     this.element.style.borderRadius = this.borderRadius + 'px'
-
-    // Update canvas border radius to match
     if (this.canvas) {
       this.canvas.style.borderRadius = this.borderRadius + 'px'
     }
 
-    // For circles and pills, set internal dimensions directly to ensure shader gets exact dimensions
-    if (this.type === 'circle') {
+    if (this.type === 'circle' || this.type === 'pill') {
       this.width = width
       this.height = height
-
-      // Update canvas to exact square dimensions for perfect circle rendering
       if (this.canvas) {
         this.canvas.width = width
         this.canvas.height = height
         this.canvas.style.width = width + 'px'
         this.canvas.style.height = height + 'px'
-
-        // Update WebGL viewport if initialized
-        if (this.gl_refs.gl) {
-          this.gl_refs.gl.viewport(0, 0, width, height)
-          this.gl_refs.gl.uniform2f(this.gl_refs.resolutionLoc, width, height)
-          this.gl_refs.gl.uniform1f(this.gl_refs.borderRadiusLoc, this.borderRadius)
-        }
-      }
-    } else if (this.type === 'pill') {
-      this.width = width
-      this.height = height
-
-      // Force exact pill dimensions for perfect capsule rendering
-      this.element.style.width = width + 'px'
-      this.element.style.height = height + 'px'
-      this.element.style.maxWidth = width + 'px'
-      this.element.style.maxHeight = height + 'px'
-
-      if (this.canvas) {
-        this.canvas.width = width
-        this.canvas.height = height
-        this.canvas.style.width = width + 'px'
-        this.canvas.style.height = height + 'px'
-
-        // Update WebGL viewport if initialized
         if (this.gl_refs.gl) {
           this.gl_refs.gl.viewport(0, 0, width, height)
           this.gl_refs.gl.uniform2f(this.gl_refs.resolutionLoc, width, height)
@@ -119,7 +82,6 @@ class Button extends Container {
         }
       }
     } else {
-      // Update size from DOM after CSS applies
       this.updateSizeFromDOM()
     }
   }
@@ -127,7 +89,6 @@ class Button extends Container {
   setupAsNestedGlass() {
     if (this.parent && !this.isNestedGlass) {
       this.isNestedGlass = true
-      // Reinitialize with nested glass shader when parent is ready
       if (this.webglInitialized) {
         this.initWebGL()
       }
@@ -146,7 +107,6 @@ class Button extends Container {
     this.textElement.className = 'glass-button-text'
     this.textElement.textContent = this.text
     this.textElement.style.fontSize = this.fontSize + 'px'
-
     this.element.appendChild(this.textElement)
   }
 
@@ -159,27 +119,20 @@ class Button extends Container {
     }
   }
 
-  // Override initWebGL to choose between standalone and nested glass
   initWebGL() {
     if (!Container.pageSnapshot || !this.gl) return
-
     if (this.parent && this.isNestedGlass) {
-      // Use nested glass (parent container's texture)
       this.initNestedGlass()
     } else {
-      // Use standalone glass (page snapshot)
       super.initWebGL()
     }
   }
 
   initNestedGlass() {
     if (!this.parent.webglInitialized) {
-      // Parent not ready, wait and try again
       setTimeout(() => this.initNestedGlass(), 100)
       return
     }
-
-    // Parent is ready, set up nested glass
     this.setupDynamicNestedShader()
     this.webglInitialized = true
   }
@@ -191,7 +144,6 @@ class Button extends Container {
       attribute vec2 a_position;
       attribute vec2 a_texcoord;
       varying vec2 v_texcoord;
-
       void main() {
         gl_Position = vec4(a_position, 0, 1);
         v_texcoord = a_texcoord;
@@ -220,7 +172,6 @@ class Button extends Container {
       uniform float u_tintOpacity;
       varying vec2 v_texcoord;
 
-      // Function to calculate distance from rounded rectangle edge
       float roundedRectDistance(vec2 coord, vec2 size, float radius) {
         vec2 center = size * 0.5;
         vec2 pixelCoord = coord * size;
@@ -229,8 +180,7 @@ class Button extends Container {
         float insideCorner = min(max(toCorner.x, toCorner.y), 0.0);
         return (outsideCorner + insideCorner - radius);
       }
-      
-      // Function to calculate distance from circle edge (negative inside, positive outside)
+
       float circleDistance(vec2 coord, vec2 size, float radius) {
         vec2 center = vec2(0.5, 0.5);
         vec2 pixelCoord = coord * size;
@@ -238,87 +188,58 @@ class Button extends Container {
         float distFromCenter = length(pixelCoord - centerPixel);
         return distFromCenter - radius;
       }
-      
-      // Check if this is a pill (border radius is approximately 50% of height AND width > height)
+
       bool isPill(vec2 size, float radius) {
         float heightRatioDiff = abs(radius - size.y * 0.5);
         bool radiusMatchesHeight = heightRatioDiff < 2.0;
-        bool isWiderThanTall = size.x > size.y + 4.0; // Must be significantly wider
+        bool isWiderThanTall = size.x > size.y + 4.0;
         return radiusMatchesHeight && isWiderThanTall;
       }
-      
-      // Check if this is a circle (border radius is approximately 50% of smaller dimension AND roughly square)
+
       bool isCircle(vec2 size, float radius) {
         float minDim = min(size.x, size.y);
         bool radiusMatchesMinDim = abs(radius - minDim * 0.5) < 1.0;
-        bool isRoughlySquare = abs(size.x - size.y) < 4.0; // Width and height are similar
+        bool isRoughlySquare = abs(size.x - size.y) < 4.0;
         return radiusMatchesMinDim && isRoughlySquare;
       }
-      
-      // Function to calculate distance from pill edge (capsule shape)
+
       float pillDistance(vec2 coord, vec2 size, float radius) {
         vec2 center = size * 0.5;
         vec2 pixelCoord = coord * size;
-        
-        // Proper capsule: line segment with radius
-        // The capsule axis runs horizontally from (radius, center.y) to (size.x - radius, center.y)
         vec2 capsuleStart = vec2(radius, center.y);
         vec2 capsuleEnd = vec2(size.x - radius, center.y);
-        
-        // Project point onto the capsule axis (line segment)
         vec2 capsuleAxis = capsuleEnd - capsuleStart;
         float capsuleLength = length(capsuleAxis);
-        
         if (capsuleLength > 0.0) {
           vec2 toPoint = pixelCoord - capsuleStart;
           float t = clamp(dot(toPoint, capsuleAxis) / dot(capsuleAxis, capsuleAxis), 0.0, 1.0);
           vec2 closestPointOnAxis = capsuleStart + t * capsuleAxis;
           return length(pixelCoord - closestPointOnAxis) - radius;
         } else {
-          // Degenerate case: just a circle
           return length(pixelCoord - center) - radius;
         }
       }
 
       void main() {
         vec2 coord = v_texcoord;
-        
-        // Calculate button position within container space
         vec2 buttonSize = u_resolution;
         vec2 containerSize = u_containerSize;
-        
-        // Convert screen positions to container-relative coordinates
-        // Container position is center, convert to top-left
         vec2 containerTopLeft = u_containerPosition - containerSize * 0.5;
         vec2 buttonTopLeft = u_buttonPosition - buttonSize * 0.5;
-        
-        // Get button's position relative to container's top-left
         vec2 buttonRelativePos = buttonTopLeft - containerTopLeft;
-        
-        // Current pixel position within the button (0 to buttonSize)
         vec2 buttonPixel = coord * buttonSize;
-        
-        // Absolute pixel position in container space
         vec2 containerPixel = buttonRelativePos + buttonPixel;
-        
-        // Convert to texture coordinates (0 to 1)
         vec2 baseTextureCoord = containerPixel / containerSize;
-        
-        // BUTTON'S SOPHISTICATED GLASS EFFECTS on top of container's glass
         float distFromEdgeShape;
-        vec2 shapeNormal; // Normal vector pointing away from shape surface
-        
+        vec2 shapeNormal;
         if (isPill(u_resolution, u_borderRadius)) {
           distFromEdgeShape = -pillDistance(coord, u_resolution, u_borderRadius);
-          
-          // Calculate normal for pill shape
           vec2 center = vec2(0.5, 0.5);
           vec2 pixelCoord = coord * u_resolution;
           vec2 capsuleStart = vec2(u_borderRadius, center.y * u_resolution.y);
           vec2 capsuleEnd = vec2(u_resolution.x - u_borderRadius, center.y * u_resolution.y);
           vec2 capsuleAxis = capsuleEnd - capsuleStart;
           float capsuleLength = length(capsuleAxis);
-          
           if (capsuleLength > 0.0) {
             vec2 toPoint = pixelCoord - capsuleStart;
             float t = clamp(dot(toPoint, capsuleAxis) / dot(capsuleAxis, capsuleAxis), 0.0, 1.0);
@@ -338,86 +259,58 @@ class Button extends Container {
           shapeNormal = normalize(coord - center);
         }
         distFromEdgeShape = max(distFromEdgeShape, 0.0);
-        
         float distFromLeft = coord.x;
         float distFromRight = 1.0 - coord.x;
         float distFromTop = coord.y;
         float distFromBottom = 1.0 - coord.y;
         float distFromEdge = distFromEdgeShape / min(u_resolution.x, u_resolution.y);
-        
-        // MULTI-LAYER BUTTON GLASS REFRACTION using shape-aware normal
         float normalizedDistance = distFromEdge * min(u_resolution.x, u_resolution.y);
         float baseIntensity = 1.0 - exp(-normalizedDistance * u_baseDistance);
         float edgeIntensity = exp(-normalizedDistance * u_edgeDistance);
         float rimIntensity = exp(-normalizedDistance * u_rimDistance);
-        
-        // Apply center warping only if warp is enabled, keep edge and rim effects always
         float baseComponent = u_warp > 0.5 ? baseIntensity * u_baseIntensity : 0.0;
         float totalIntensity = baseComponent + edgeIntensity * u_edgeIntensity + rimIntensity * u_rimIntensity;
-        
         vec2 baseRefraction = shapeNormal * totalIntensity;
-        
-        // Corner enhancement for buttons
         float cornerProximityX = min(distFromLeft, distFromRight);
         float cornerProximityY = min(distFromTop, distFromBottom);
         float cornerDistance = max(cornerProximityX, cornerProximityY);
         float cornerNormalized = cornerDistance * min(u_resolution.x, u_resolution.y);
-        
         float cornerBoost = exp(-cornerNormalized * 0.3) * u_cornerBoost;
         vec2 cornerRefraction = shapeNormal * cornerBoost;
-        
-        // Button ripple texture
         vec2 perpendicular = vec2(-shapeNormal.y, shapeNormal.x);
         float rippleEffect = sin(distFromEdge * 30.0) * u_rippleEffect * rimIntensity;
         vec2 textureRefraction = perpendicular * rippleEffect;
-        
         vec2 totalRefraction = baseRefraction + cornerRefraction + textureRefraction;
         vec2 textureCoord = baseTextureCoord + totalRefraction;
-        
-        // HIGH-QUALITY BUTTON BLUR on container texture
         vec4 color = vec4(0.0);
         vec2 texelSize = 1.0 / containerSize;
-        float sigma = u_blurRadius / 3.0; // More substantial blur
+        float sigma = u_blurRadius / 3.0;
         vec2 blurStep = texelSize * sigma;
-        
         float totalWeight = 0.0;
-        
-        // 9x9 blur for buttons (more samples for quality)
         for(float i = -4.0; i <= 4.0; i += 1.0) {
           for(float j = -4.0; j <= 4.0; j += 1.0) {
             float distance = length(vec2(i, j));
             if(distance > 4.0) continue;
-            
             float weight = exp(-(distance * distance) / (2.0 * sigma * sigma));
-            
             vec2 offset = vec2(i, j) * blurStep;
             color += texture2D(u_image, textureCoord + offset) * weight;
             totalWeight += weight;
           }
         }
-        
         color /= totalWeight;
-        
-        // BUTTON'S OWN GRADIENT LAYERS (same sophistication as container)
         float gradientPosition = coord.y;
-        
-        // Primary button gradient
         vec3 topTint = vec3(1.0, 1.0, 1.0);
         vec3 bottomTint = vec3(0.7, 0.7, 0.7);
         vec3 gradientTint = mix(topTint, bottomTint, gradientPosition);
         vec3 tintedColor = mix(color.rgb, gradientTint, u_tintOpacity * 0.7);
         color = vec4(tintedColor, color.a);
-        
-        // SECOND BUTTON GRADIENT - sampling from container's texture for variation
         vec2 viewportCenter = u_buttonPosition;
         float topY = max(0.0, (viewportCenter.y - buttonSize.y * 0.4) / containerSize.y);
         float midY = viewportCenter.y / containerSize.y;
         float bottomY = min(1.0, (viewportCenter.y + buttonSize.y * 0.4) / containerSize.y);
-        
         vec3 topColor = texture2D(u_image, vec2(0.5, topY)).rgb;
         vec3 midColor = texture2D(u_image, vec2(0.5, midY)).rgb;
         vec3 bottomColor = texture2D(u_image, vec2(0.5, bottomY)).rgb;
-        
         vec3 sampledGradient;
         if (gradientPosition < 0.1) {
           sampledGradient = topColor;
@@ -433,16 +326,11 @@ class Button extends Container {
             sampledGradient = mix(midColor, bottomColor, t);
           }
         }
-        
         vec3 secondTinted = mix(color.rgb, sampledGradient, u_tintOpacity * 0.4);
-        
-        // Button highlighting/shadow system
-        vec3 buttonTopTint = vec3(1.08, 1.08, 1.08);    
-        vec3 buttonBottomTint = vec3(0.92, 0.92, 0.92); 
+        vec3 buttonTopTint = vec3(1.08, 1.08, 1.08);
+        vec3 buttonBottomTint = vec3(0.92, 0.92, 0.92);
         vec3 buttonGradient = mix(buttonTopTint, buttonBottomTint, gradientPosition);
         vec3 finalTinted = secondTinted * buttonGradient;
-        
-        // Shape mask (rounded rectangle, circle, or pill)
         float maskDistance;
         if (isPill(u_resolution, u_borderRadius)) {
           maskDistance = pillDistance(coord, u_resolution, u_borderRadius);
@@ -452,7 +340,6 @@ class Button extends Container {
           maskDistance = roundedRectDistance(coord, u_resolution, u_borderRadius);
         }
         float mask = 1.0 - smoothstep(-1.0, 1.0, maskDistance);
-        
         gl_FragColor = vec4(finalTinted, mask);
       }
     `
@@ -462,7 +349,6 @@ class Button extends Container {
 
     gl.useProgram(program)
 
-    // Set up geometry (same as parent)
     const positionBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW)
@@ -471,7 +357,6 @@ class Button extends Container {
     gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0]), gl.STATIC_DRAW)
 
-    // Get locations
     const positionLoc = gl.getAttribLocation(program, 'a_position')
     const texcoordLoc = gl.getAttribLocation(program, 'a_texcoord')
     const resolutionLoc = gl.getUniformLocation(program, 'u_resolution')
@@ -493,29 +378,15 @@ class Button extends Container {
     const tintOpacityLoc = gl.getUniformLocation(program, 'u_tintOpacity')
     const imageLoc = gl.getUniformLocation(program, 'u_image')
 
-    // Create texture that will be updated dynamically from container canvas
     const texture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, texture)
-
-    // Initialize with parent container's current canvas size
     const containerCanvas = this.parent.canvas
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      containerCanvas.width,
-      containerCanvas.height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    )
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, containerCanvas.width, containerCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-    // Store references
     this.gl_refs = {
       gl,
       texture,
@@ -543,7 +414,6 @@ class Button extends Container {
       texcoordBuffer
     }
 
-    // Set up viewport and attributes
     gl.viewport(0, 0, this.canvas.width, this.canvas.height)
     gl.clearColor(0, 0, 0, 0)
 
@@ -555,10 +425,9 @@ class Button extends Container {
     gl.enableVertexAttribArray(texcoordLoc)
     gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 0, 0)
 
-    // Set uniforms
     gl.uniform2f(resolutionLoc, this.canvas.width, this.canvas.height)
     gl.uniform2f(textureSizeLoc, containerCanvas.width, containerCanvas.height)
-    gl.uniform1f(blurRadiusLoc, window.glassControls?.blurRadius || 2.0) // Controlled blur for sharpness
+    gl.uniform1f(blurRadiusLoc, window.glassControls?.blurRadius || 2.0)
     gl.uniform1f(borderRadiusLoc, this.borderRadius)
     gl.uniform1f(warpLoc, this.warp ? 1.0 : 0.0)
     gl.uniform1f(edgeIntensityLoc, window.glassControls?.edgeIntensity || 0.01)
@@ -571,7 +440,6 @@ class Button extends Container {
     gl.uniform1f(rippleEffectLoc, window.glassControls?.rippleEffect || 0.1)
     gl.uniform1f(tintOpacityLoc, this.tintOpacity)
 
-    // Set positions
     const buttonPosition = this.getPosition()
     const containerPosition = this.parent.getPosition()
     gl.uniform2f(buttonPositionLoc, buttonPosition.x, buttonPosition.y)
@@ -582,41 +450,30 @@ class Button extends Container {
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.uniform1i(imageLoc, 0)
 
-    // Start rendering
     this.startNestedRenderLoop()
   }
 
   startNestedRenderLoop() {
     const render = () => {
       if (!this.gl_refs.gl || !this.parent) return
-
       const gl = this.gl_refs.gl
-
-      // UPDATE TEXTURE FROM PARENT CONTAINER'S CURRENT RENDERED OUTPUT
       const containerCanvas = this.parent.canvas
       gl.bindTexture(gl.TEXTURE_2D, this.gl_refs.texture)
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, containerCanvas)
-
       gl.clear(gl.COLOR_BUFFER_BIT)
-
-      // Update button and container positions (in case layout changed)
       const buttonPosition = this.getPosition()
       const containerPosition = this.parent.getPosition()
       gl.uniform2f(this.gl_refs.buttonPositionLoc, buttonPosition.x, buttonPosition.y)
       gl.uniform2f(this.gl_refs.containerPositionLoc, containerPosition.x, containerPosition.y)
-
       gl.drawArrays(gl.TRIANGLES, 0, 6)
     }
-
-    // Render every frame to keep sampling parent's live output
     const animationLoop = () => {
       render()
       requestAnimationFrame(animationLoop)
     }
-
     animationLoop()
-
-    // Store render function for external calls
     this.render = render
   }
 }
+
+export default Button;
