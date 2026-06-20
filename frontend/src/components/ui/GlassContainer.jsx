@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Container from '../../lib/liquid-glass/container.js'
-import '../../lib/liquid-glass/glass.css'
+import Container from '../../../lib/liquid-glass/container.js'
+import '../../../lib/liquid-glass/glass.css'
 
 export default function GlassContainer({ children, borderRadius = 28, tintOpacity = 0.22, style = {} }) {
     const mountRef = useRef(null)

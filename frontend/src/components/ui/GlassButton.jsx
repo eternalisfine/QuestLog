@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import Button from '../../lib/liquid-glass/button.js'
-import '../../lib/liquid-glass/glass.css'
+import Button from '../../../lib/liquid-glass/button.js'
+import '../../../lib/liquid-glass/glass.css'
 
 export default function GlassButton({ label, onClick, type = 'pill', size = 18 }) {
     const mountRef = useRef(null)
